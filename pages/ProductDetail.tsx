@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PRODUCTS } from '../constants';
 import { useCart, useToast } from '../App';
-import { FileText, Download, CheckCircle, X } from 'lucide-react';
+import { FileText, Download, CheckCircle, X, ArrowLeft } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+// Max quantity per product
+const MAX_QUANTITY = 50;
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const product = PRODUCTS.find(p => p.id === id);
   const { addToCart } = useCart();
   const { showToast } = useToast();
@@ -17,6 +21,29 @@ const ProductDetailPage: React.FC = () => {
   const [downloadType, setDownloadType] = useState<'MSDS' | 'CoA' | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Track recently viewed products
+  useEffect(() => {
+    if (product) {
+      try {
+        const saved = localStorage.getItem('biosynth_recently_viewed');
+        let recentlyViewed: string[] = saved ? JSON.parse(saved) : [];
+
+        // Remove if already exists (to move to front)
+        recentlyViewed = recentlyViewed.filter(pid => pid !== product.id);
+
+        // Add to front
+        recentlyViewed.unshift(product.id);
+
+        // Keep only last 10
+        recentlyViewed = recentlyViewed.slice(0, 10);
+
+        localStorage.setItem('biosynth_recently_viewed', JSON.stringify(recentlyViewed));
+      } catch (e) {
+        console.error('Failed to update recently viewed:', e);
+      }
+    }
+  }, [product]);
 
   if (!product) return <div className="p-12 text-center text-carbon-500">Product not found.</div>;
 
@@ -70,6 +97,15 @@ const ProductDetailPage: React.FC = () => {
       {/* Header Info */}
       <div className="border-b border-carbon-200 bg-carbon-50">
         <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12 md:py-16 mt-16 lg:mt-0">
+           {/* Back button */}
+           <button
+              onClick={() => navigate(-1)}
+              className="mb-6 flex items-center gap-2 text-sm text-carbon-500 hover:text-carbon-900 transition-colors group"
+           >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span>Back</span>
+           </button>
+
            <div className="mb-6 flex items-center space-x-2 text-xs font-mono text-carbon-500 uppercase tracking-widest">
               <Link to="/catalog" className="hover:text-carbon-900">Catalog</Link>
               <span>/</span>
@@ -198,19 +234,23 @@ const ProductDetailPage: React.FC = () => {
                    <div className="flex items-center justify-between border border-carbon-200 rounded-sm overflow-hidden">
                       <button
                         onClick={() => setQty(Math.max(1, qty-1))}
-                        className="px-5 py-3 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-50 transition-colors text-lg font-medium"
+                        className="px-5 py-3 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-50 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={qty <= 1}
                       >
                         −
                       </button>
                       <span className="font-mono text-carbon-900 text-lg min-w-[3rem] text-center">{qty}</span>
                       <button
-                        onClick={() => setQty(qty+1)}
-                        className="px-5 py-3 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-50 transition-colors text-lg font-medium"
+                        onClick={() => setQty(Math.min(MAX_QUANTITY, qty+1))}
+                        className="px-5 py-3 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-50 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={qty >= MAX_QUANTITY}
                       >
                         +
                       </button>
                    </div>
+                   {qty >= MAX_QUANTITY && (
+                      <p className="text-xs text-amber-600 font-mono text-center">Max {MAX_QUANTITY} units per order</p>
+                   )}
                    <button
                       onClick={handleAddToCart}
                       className={`w-full bg-carbon-900 text-white py-4 text-sm font-medium uppercase tracking-widest transition-all duration-300 rounded-sm ${isAnimating ? 'scale-[0.98] bg-emerald-600' : 'scale-100 hover:bg-signal-600'}`}

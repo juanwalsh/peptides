@@ -1,22 +1,62 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../types';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Heart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
+  searchQuery?: string;
+  isFavorite?: boolean;
+  onToggleFavorite?: (productId: string) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+// Helper to highlight search terms
+const highlightText = (text: string, query: string): React.ReactNode => {
+  if (!query || !query.trim()) return text;
+
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+
+  return parts.map((part, i) =>
+    regex.test(part) ? (
+      <mark key={i} className="bg-signal-200 text-signal-900 px-0.5 rounded">{part}</mark>
+    ) : part
+  );
+};
+
+const ProductCard: React.FC<ProductCardProps> = ({ product, searchQuery = '', isFavorite = false, onToggleFavorite }) => {
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleFavorite) {
+      onToggleFavorite(product.id);
+    }
+  };
+
   return (
     <Link
       to={`/product/${product.id}`}
       className="group block h-full bg-white border border-carbon-200 hover:border-carbon-900 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden p-5 md:p-8 flex flex-col justify-between"
     >
+      {/* Favorite button */}
+      {onToggleFavorite && (
+        <button
+          onClick={handleFavoriteClick}
+          className={`absolute top-4 right-4 z-10 p-2 rounded-full transition-all duration-200 ${
+            isFavorite
+              ? 'bg-signal-50 text-signal-600'
+              : 'bg-carbon-50 text-carbon-400 opacity-0 group-hover:opacity-100 hover:bg-signal-50 hover:text-signal-600'
+          }`}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Heart className={`w-4 h-4 ${isFavorite ? 'fill-signal-600' : ''}`} />
+        </button>
+      )}
+
       <div>
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-6 pr-8">
           <span className="font-mono text-[10px] uppercase tracking-widest text-carbon-400 border border-carbon-100 px-2 py-1 rounded-sm">
-            {product.id}
+            {highlightText(product.id, searchQuery)}
           </span>
           {product.purity > 98 && (
             <span className="font-mono text-[10px] uppercase tracking-widest text-signal-600 bg-signal-50 px-2 py-1">
@@ -26,14 +66,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         <h3 className="font-display text-xl md:text-2xl text-carbon-900 mb-2 group-hover:text-signal-600 transition-colors font-medium">
-          {product.name}
+          {highlightText(product.name, searchQuery)}
         </h3>
         <div className="font-mono text-xs text-carbon-500 mb-6 flex space-x-4">
-           <span>{product.casNumber}</span>
+           <span>{highlightText(product.casNumber, searchQuery)}</span>
            <span className="text-carbon-300">|</span>
            <span>{product.molecularWeight} g/mol</span>
         </div>
-        
+
         <p className="text-sm text-carbon-600 leading-relaxed font-light line-clamp-3 mb-8">
           {product.description}
         </p>

@@ -14,6 +14,53 @@ import ProductDetailPage from './pages/ProductDetail';
 import PublicCoasPage from './pages/PublicCoas';
 import TestimonialsPage from './pages/Testimonials';
 import DeliveryInfoPage from './pages/DeliveryInfo';
+import EducationPage from './pages/Education';
+
+// --- 404 Page ---
+const NotFoundPage = () => (
+  <div className="min-h-[60vh] flex flex-col items-center justify-center max-w-screen-2xl mx-auto px-6 animate-in fade-in duration-500">
+    <div className="text-center">
+      <h1 className="text-8xl font-display font-medium text-carbon-200 mb-4">404</h1>
+      <h2 className="text-3xl font-display font-medium text-carbon-900 mb-4">Page Not Found</h2>
+      <p className="text-carbon-500 mb-8 max-w-md mx-auto">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <Link to="/" className="px-6 py-3 bg-carbon-900 text-white text-sm font-medium uppercase tracking-widest hover:bg-signal-600 transition-colors">
+          Go Home
+        </Link>
+        <Link to="/catalog" className="px-6 py-3 border border-carbon-200 text-carbon-900 text-sm font-medium uppercase tracking-widest hover:border-carbon-900 transition-colors">
+          Browse Catalog
+        </Link>
+      </div>
+    </div>
+  </div>
+);
+
+// --- Skeleton Component ---
+const Skeleton = ({ className = '' }: { className?: string }) => (
+  <div className={`animate-pulse bg-carbon-100 rounded ${className}`} />
+);
+
+const ProductCardSkeleton = () => (
+  <div className="bg-white border border-carbon-200 p-5 md:p-8 flex flex-col justify-between h-full">
+    <div>
+      <div className="flex justify-between items-start mb-6">
+        <Skeleton className="h-6 w-16" />
+        <Skeleton className="h-6 w-20" />
+      </div>
+      <Skeleton className="h-8 w-3/4 mb-2" />
+      <Skeleton className="h-4 w-1/2 mb-6" />
+      <Skeleton className="h-4 w-full mb-2" />
+      <Skeleton className="h-4 w-full mb-2" />
+      <Skeleton className="h-4 w-2/3 mb-8" />
+    </div>
+    <div className="flex items-center justify-between border-t border-carbon-100 pt-6">
+      <Skeleton className="h-5 w-16" />
+      <Skeleton className="h-8 w-8 rounded-full" />
+    </div>
+  </div>
+);
 
 // --- Context ---
 interface ToastContextType {
@@ -140,6 +187,7 @@ const Footer = () => (
           <h4 className="font-mono text-xs text-carbon-400 uppercase tracking-widest mb-6">Directory</h4>
           <ul className="space-y-4">
             <li><Link to="/catalog" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Catalog</Link></li>
+            <li><Link to="/education" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Education</Link></li>
             <li><Link to="/coas" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Public CoAs</Link></li>
             <li><Link to="/delivery" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Shipping Info</Link></li>
             <li><Link to="/testimonials" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Testimonials</Link></li>
@@ -189,6 +237,9 @@ const Navbar = () => {
             <Link to="/catalog" className={`text-sm font-medium transition-colors ${isActive('/catalog')}`}>
               Catalog
             </Link>
+            <Link to="/education" className={`text-sm font-medium transition-colors ${isActive('/education')}`}>
+              Education
+            </Link>
             <Link to="/coas" className={`text-sm font-medium transition-colors ${isActive('/coas')}`}>
               Public CoAs
             </Link>
@@ -228,6 +279,7 @@ const Navbar = () => {
           <div className="flex flex-col space-y-6">
             <Link to="/" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Home</Link>
             <Link to="/catalog" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Catalog</Link>
+            <Link to="/education" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Education</Link>
             <Link to="/coas" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Public CoAs</Link>
             <Link to="/delivery" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Shipping Info</Link>
             <Link to="/testimonials" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Testimonials</Link>
@@ -247,6 +299,9 @@ const CartPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountryData, setSelectedCountryData] = useState<CountryData | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; discount: number; label: string } | null>(null);
+  const [discountError, setDiscountError] = useState('');
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -257,17 +312,52 @@ const CartPage = () => {
     country: ''
   });
 
+  // Calculate subtotal
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-  const isFreeShipping = subtotal >= CONFIG.FREE_SHIPPING_THRESHOLD;
+  // Calculate total items
+  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  // Calculate volume discount
+  const volumeDiscount = CONFIG.VOLUME_DISCOUNTS.find(tier => totalItems >= tier.minQty);
+  const volumeDiscountAmount = volumeDiscount ? subtotal * volumeDiscount.discount : 0;
+
+  // Apply coupon discount (on top of volume discount)
+  const couponDiscountAmount = appliedDiscount ? (subtotal - volumeDiscountAmount) * appliedDiscount.discount : 0;
+
+  // Subtotal after discounts
+  const discountedSubtotal = subtotal - volumeDiscountAmount - couponDiscountAmount;
+
+  const isFreeShipping = discountedSubtotal >= CONFIG.FREE_SHIPPING_THRESHOLD;
   const shippingCost = selectedCountryData
     ? (isFreeShipping ? 0 : selectedCountryData.cost)
     : 0;
 
-  const total = subtotal + shippingCost;
+  const total = discountedSubtotal + shippingCost;
+
+  // Handle discount code application
+  const handleApplyDiscount = () => {
+    const code = discountCode.trim().toUpperCase();
+    const discountInfo = CONFIG.DISCOUNT_CODES[code];
+
+    if (discountInfo) {
+      setAppliedDiscount({ code, ...discountInfo });
+      setDiscountError('');
+      setDiscountCode('');
+    } else {
+      setDiscountError('Invalid discount code');
+      setAppliedDiscount(null);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode('');
+    setDiscountError('');
+  };
 
   // Shipping warning logic: Close enough is defined as within threshold of the limit
-  const remainingForFreeShipping = CONFIG.FREE_SHIPPING_THRESHOLD - subtotal;
+  const remainingForFreeShipping = CONFIG.FREE_SHIPPING_THRESHOLD - discountedSubtotal;
   const isCloseToFreeShipping = remainingForFreeShipping > 0 && remainingForFreeShipping <= CONFIG.SHIPPING_WARNING_THRESHOLD;
 
   const handleInitiateCheckout = () => {
@@ -347,6 +437,18 @@ const CartPage = () => {
         zip: sanitizeInput(formData.zip),
       };
 
+      // Build discount lines
+      let discountLines = '';
+      if (volumeDiscount) {
+        discountLines += `Volume Discount (${volumeDiscount.label}): -$${volumeDiscountAmount.toFixed(2)}\n`;
+      }
+      if (appliedDiscount) {
+        discountLines += `Coupon (${appliedDiscount.code}): -$${couponDiscountAmount.toFixed(2)}\n`;
+      }
+
+      // Estimated delivery
+      const estimatedDelivery = selectedCountryData?.time || 'To be confirmed';
+
       const message = `
 *New Research Requisition Request*
 
@@ -361,8 +463,10 @@ ${itemsList}
 
 *Financial Summary:*
 Subtotal: $${subtotal.toFixed(2)}
-Shipping (${selectedCountryData.region}): ${shippingLabel}
+${discountLines}Shipping (${selectedCountryData.region}): ${shippingLabel}
 *TOTAL ESTIMATED VALUE:* $${total.toFixed(2)}
+
+*Estimated Delivery:* ${estimatedDelivery}
 
 _This request is for laboratory research use only._
       `.trim();
@@ -404,42 +508,57 @@ _This request is for laboratory research use only._
         {/* Cart Items List */}
         <div className="lg:col-span-7 space-y-8">
           {cart.map((item, index) => (
-            <div 
-                key={item.id} 
+            <div
+                key={item.id}
                 className="flex flex-col md:flex-row items-start md:items-center justify-between group py-4 border-b border-carbon-100 last:border-0 animate-in slide-in-from-bottom-3 duration-500 fill-mode-both"
                 style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-carbon-900 group-hover:text-signal-600 transition-colors">{item.name}</h3>
-                <p className="text-xs font-mono text-carbon-400 mt-1 uppercase tracking-wider">{item.casNumber} — {item.purity}% Purity</p>
+              {/* Product Icon & Info */}
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-16 h-16 bg-carbon-50 border border-carbon-100 rounded-sm flex items-center justify-center flex-shrink-0">
+                  <Hexagon className="w-8 h-8 text-carbon-300 stroke-1" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Link to={`/product/${item.id}`} className="text-lg font-medium text-carbon-900 group-hover:text-signal-600 transition-colors hover:underline">
+                    {item.name}
+                  </Link>
+                  <p className="text-xs font-mono text-carbon-400 mt-1 uppercase tracking-wider">{item.casNumber} — {item.purity}% Purity</p>
+                  <p className="text-xs text-carbon-500 mt-1">${item.price.toFixed(2)} each</p>
+                </div>
               </div>
-              
-              <div className="flex items-center space-x-8 mt-4 md:mt-0 w-full md:w-auto justify-between md:justify-end">
+
+              <div className="flex items-center space-x-6 mt-4 md:mt-0 w-full md:w-auto justify-between md:justify-end">
                 {/* Quantity Controls */}
-                <div className="flex items-center bg-carbon-50 border border-carbon-200 rounded-sm">
-                   <button 
-                     onClick={() => updateQuantity(item.id, -1)}
-                     className="p-2 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-200 transition-colors"
-                     disabled={item.quantity <= 1}
-                   >
-                     <Minus className="w-3 h-3" />
-                   </button>
-                   <span className="font-mono text-sm text-carbon-900 w-8 text-center">{item.quantity}</span>
-                   <button 
-                     onClick={() => updateQuantity(item.id, 1)}
-                     className="p-2 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-200 transition-colors"
-                   >
-                     <Plus className="w-3 h-3" />
-                   </button>
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center bg-carbon-50 border border-carbon-200 rounded-sm">
+                     <button
+                       onClick={() => updateQuantity(item.id, -1)}
+                       className="p-2 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                       disabled={item.quantity <= 1}
+                     >
+                       <Minus className="w-3 h-3" />
+                     </button>
+                     <span className="font-mono text-sm text-carbon-900 w-8 text-center">{item.quantity}</span>
+                     <button
+                       onClick={() => updateQuantity(item.id, 1)}
+                       className="p-2 text-carbon-500 hover:text-carbon-900 hover:bg-carbon-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                       disabled={item.quantity >= CONFIG.MAX_QUANTITY_PER_ITEM}
+                     >
+                       <Plus className="w-3 h-3" />
+                     </button>
+                  </div>
+                  {item.quantity >= CONFIG.MAX_QUANTITY_PER_ITEM && (
+                    <span className="text-[10px] text-amber-600 font-mono mt-1">Max reached</span>
+                  )}
                 </div>
 
                 <div className="font-mono text-sm text-carbon-900 w-24 text-right">
                   ${(item.price * item.quantity).toFixed(2)}
                 </div>
-                
-                <button 
+
+                <button
                   onClick={() => removeFromCart(item.id)}
-                  className="text-xs font-mono text-red-400 hover:text-red-600 uppercase tracking-widest border-b border-transparent hover:border-red-600 transition-all ml-4"
+                  className="text-xs font-mono text-red-400 hover:text-red-600 uppercase tracking-widest border-b border-transparent hover:border-red-600 transition-all ml-2"
                 >
                   Remove
                 </button>
@@ -447,32 +566,105 @@ _This request is for laboratory research use only._
             </div>
           ))}
           
+          {/* Discount Code Input */}
+          <div className="mt-8 pt-6 border-t border-carbon-200 animate-in fade-in duration-500">
+            <label className="font-mono text-xs text-carbon-400 uppercase tracking-widest mb-3 block">Discount Code</label>
+            {appliedDiscount ? (
+              <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-sm">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm text-emerald-800 font-medium">{appliedDiscount.code}</span>
+                  <span className="text-xs text-emerald-600">({appliedDiscount.label})</span>
+                </div>
+                <button onClick={handleRemoveDiscount} className="text-xs text-emerald-600 hover:text-emerald-800 underline">
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter code"
+                  value={discountCode}
+                  onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountError(''); }}
+                  className="flex-1 p-3 border border-carbon-200 text-sm font-mono bg-white placeholder:text-carbon-400 outline-none rounded-sm focus:border-carbon-900 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyDiscount}
+                  className="px-4 py-3 bg-carbon-900 text-white text-xs font-medium uppercase tracking-widest hover:bg-signal-600 transition-colors rounded-sm"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+            {discountError && <p className="text-xs text-red-500 mt-2 font-mono">{discountError}</p>}
+          </div>
+
+          {/* Pricing Summary */}
           <div className="mt-8 pt-8 border-t border-carbon-900 animate-in fade-in duration-700 delay-300">
              <div className="flex justify-between items-center mb-2">
                 <span className="font-display text-lg text-carbon-600">Subtotal</span>
                 <span className="font-mono text-lg text-carbon-600">${subtotal.toFixed(2)}</span>
              </div>
-             
-             {selectedCountryData && (
+
+             {/* Volume Discount */}
+             {volumeDiscount && (
                 <div className="flex justify-between items-center mb-2 animate-in fade-in duration-300">
-                    <span className="font-display text-sm text-carbon-500 flex items-center">
-                        Shipping to {selectedCountryData.name}
+                    <span className="font-display text-sm text-emerald-600 flex items-center gap-2">
+                        <Check className="w-4 h-4" />
+                        Volume Discount ({volumeDiscount.label})
                     </span>
-                    <span className={`font-mono text-lg ${isFreeShipping ? 'text-emerald-600' : 'text-carbon-600'}`}>
-                        {isFreeShipping ? 'Waived' : `$${shippingCost.toFixed(2)}`}
-                    </span>
+                    <span className="font-mono text-lg text-emerald-600">-${volumeDiscountAmount.toFixed(2)}</span>
                 </div>
+             )}
+
+             {/* Coupon Discount */}
+             {appliedDiscount && (
+                <div className="flex justify-between items-center mb-2 animate-in fade-in duration-300">
+                    <span className="font-display text-sm text-emerald-600 flex items-center gap-2">
+                        <Check className="w-4 h-4" />
+                        Coupon ({appliedDiscount.code})
+                    </span>
+                    <span className="font-mono text-lg text-emerald-600">-${couponDiscountAmount.toFixed(2)}</span>
+                </div>
+             )}
+
+             {selectedCountryData && (
+                <>
+                  <div className="flex justify-between items-center mb-2 animate-in fade-in duration-300">
+                      <span className="font-display text-sm text-carbon-500 flex items-center">
+                          Shipping to {selectedCountryData.name}
+                      </span>
+                      <span className={`font-mono text-lg ${isFreeShipping ? 'text-emerald-600' : 'text-carbon-600'}`}>
+                          {isFreeShipping ? 'Waived' : `$${shippingCost.toFixed(2)}`}
+                      </span>
+                  </div>
+                  {selectedCountryData.time && (
+                    <div className="flex justify-between items-center mb-2 text-xs">
+                        <span className="font-mono text-carbon-400 uppercase tracking-widest">Est. Delivery</span>
+                        <span className="font-mono text-carbon-600">{selectedCountryData.time}</span>
+                    </div>
+                  )}
+                </>
              )}
 
              <div className="flex justify-between items-center mt-4 pt-4 border-t border-carbon-100">
                 <span className="font-display text-xl text-carbon-900 font-medium">Total Estimate</span>
                 <span className="font-mono text-2xl text-carbon-900">${total.toFixed(2)}</span>
              </div>
-             
+
              {/* Free Shipping Progress */}
              {!isFreeShipping && (
                  <p className="text-xs text-right text-carbon-400 mt-2 font-mono">
-                    Spend ${(CONFIG.FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} more for free global shipping.
+                    Spend ${remainingForFreeShipping.toFixed(2)} more for free global shipping.
+                 </p>
+             )}
+
+             {/* Volume discount hint */}
+             {!volumeDiscount && totalItems < 5 && (
+                 <p className="text-xs text-right text-signal-600 mt-2 font-mono">
+                    Add {5 - totalItems} more item{5 - totalItems > 1 ? 's' : ''} to get 5% off!
                  </p>
              )}
           </div>
@@ -706,6 +898,7 @@ export default function App() {
           if (item.id === productId) {
               const newQty = item.quantity + delta;
               if (newQty < 1) return item; // Prevent going below 1, user must use 'Remove' button
+              if (newQty > CONFIG.MAX_QUANTITY_PER_ITEM) return item; // Prevent exceeding max
               return { ...item, quantity: newQty };
           }
           return item;
@@ -738,10 +931,12 @@ export default function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/catalog" element={<CatalogPage />} />
                 <Route path="/product/:id" element={<ProductDetailPage />} />
+                <Route path="/education" element={<EducationPage />} />
                 <Route path="/coas" element={<PublicCoasPage />} />
                 <Route path="/delivery" element={<DeliveryInfoPage />} />
                 <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/cart" element={<CartPage />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
             <Footer />

@@ -14,4 +14,20 @@ export const CONFIG = {
   // Toast display duration (ms)
   TOAST_DURATION: 4000,
   TOAST_EXIT_ANIMATION: 500,
+
+  // Max quantity per item in cart
+  MAX_QUANTITY_PER_ITEM: 50,
+
+  // Volume discount tiers
+  VOLUME_DISCOUNTS: [
+    { minQty: 10, discount: 0.10, label: '10% off' },
+    { minQty: 5, discount: 0.05, label: '5% off' },
+  ] as const,
+
+  // Valid discount codes
+  DISCOUNT_CODES: {
+    'RESEARCH10': { discount: 0.10, label: '10% Research Discount' },
+    'WELCOME5': { discount: 0.05, label: '5% Welcome Discount' },
+    'BULK15': { discount: 0.15, label: '15% Bulk Order Discount' },
+  } as Record<string, { discount: number; label: string }>,
 } as const;
