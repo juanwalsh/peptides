@@ -17,7 +17,7 @@ const PRODUCT_SECTIONS = {
   'Hormonal & Reproductive': ['KS5', 'KS10', 'OT2', 'OT5', 'G75', 'ARIM100', 'ARIM200', 'ARIM300', 'ARIM500', 'ARIM1000'],
   'Cosmetic & Anti-Aging': ['NP810', 'KP10', 'DR5'],
   'Research Blends': ['KLOW', 'BBG70', 'BB10', 'BB20', 'CS10', 'CP10'],
-  'Solvents & Accessories': ['WA3', 'WA10']
+  'Solvents & Accessories': ['WA3', 'WA10', 'SYR', 'ALC', 'WIP', 'GLV']
 };
 
 // Sort options
