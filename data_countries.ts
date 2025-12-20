@@ -250,12 +250,13 @@ export const DELIVERY_DATA: Region[] = [
 // --- Derived Helpers for App Consumption ---
 
 // 1. Flattened list of all countries for dropdowns
-export const COUNTRIES: { name: string; cost: number; region: string }[] = DELIVERY_DATA.flatMap(region => 
-  region.subregions.flatMap(sub => 
+export const COUNTRIES: { name: string; cost: number; region: string; time: string }[] = DELIVERY_DATA.flatMap(region =>
+  region.subregions.flatMap(sub =>
     sub.countries.map(c => ({
       name: c.name,
       cost: c.cost,
-      region: region.name
+      region: region.name,
+      time: c.time
     }))
   )
 ).sort((a, b) => a.name.localeCompare(b.name));

@@ -14,7 +14,6 @@ import ProductDetailPage from './pages/ProductDetail';
 import PublicCoasPage from './pages/PublicCoas';
 import TestimonialsPage from './pages/Testimonials';
 import DeliveryInfoPage from './pages/DeliveryInfo';
-import EducationPage from './pages/Education';
 
 // --- 404 Page ---
 const NotFoundPage = () => (
@@ -187,7 +186,6 @@ const Footer = () => (
           <h4 className="font-mono text-xs text-carbon-400 uppercase tracking-widest mb-6">Directory</h4>
           <ul className="space-y-4">
             <li><Link to="/catalog" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Catalog</Link></li>
-            <li><Link to="/education" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Education</Link></li>
             <li><Link to="/coas" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Public CoAs</Link></li>
             <li><Link to="/delivery" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Shipping Info</Link></li>
             <li><Link to="/testimonials" className="text-carbon-900 hover:text-signal-600 text-sm transition-colors">Testimonials</Link></li>
@@ -237,9 +235,6 @@ const Navbar = () => {
             <Link to="/catalog" className={`text-sm font-medium transition-colors ${isActive('/catalog')}`}>
               Catalog
             </Link>
-            <Link to="/education" className={`text-sm font-medium transition-colors ${isActive('/education')}`}>
-              Education
-            </Link>
             <Link to="/coas" className={`text-sm font-medium transition-colors ${isActive('/coas')}`}>
               Public CoAs
             </Link>
@@ -279,7 +274,6 @@ const Navbar = () => {
           <div className="flex flex-col space-y-6">
             <Link to="/" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Home</Link>
             <Link to="/catalog" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Catalog</Link>
-            <Link to="/education" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Education</Link>
             <Link to="/coas" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Public CoAs</Link>
             <Link to="/delivery" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Shipping Info</Link>
             <Link to="/testimonials" className="text-2xl font-display text-carbon-900" onClick={() => setIsOpen(false)}>Testimonials</Link>
@@ -801,10 +795,21 @@ _This request is for laboratory research use only._
                          )}
                        </div>
                     </div>
+
+                    {/* Estimated Delivery Display */}
+                    {selectedCountryData && selectedCountryData.time && (
+                      <div className="bg-carbon-50 border border-carbon-200 p-4 rounded-sm flex items-center justify-between animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-carbon-500" />
+                          <span className="text-sm text-carbon-600">Estimated Delivery to {selectedCountryData.name}</span>
+                        </div>
+                        <span className="text-sm font-medium text-carbon-900">{selectedCountryData.time}</span>
+                      </div>
+                    )}
                  </div>
 
-                 <button 
-                   type="submit" 
+                 <button
+                   type="submit"
                    disabled={isSubmitting}
                    className="w-full mt-8 bg-signal-600 text-white px-8 py-5 text-sm font-medium hover:bg-signal-900 transition-colors uppercase tracking-wider flex items-center justify-center disabled:opacity-50 rounded-sm shadow-sm"
                  >
@@ -931,7 +936,6 @@ export default function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/catalog" element={<CatalogPage />} />
                 <Route path="/product/:id" element={<ProductDetailPage />} />
-                <Route path="/education" element={<EducationPage />} />
                 <Route path="/coas" element={<PublicCoasPage />} />
                 <Route path="/delivery" element={<DeliveryInfoPage />} />
                 <Route path="/testimonials" element={<TestimonialsPage />} />

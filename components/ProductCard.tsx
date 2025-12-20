@@ -38,14 +38,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, searchQuery = '', is
       to={`/product/${product.id}`}
       className="group block h-full bg-white border border-carbon-200 hover:border-carbon-900 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden p-5 md:p-8 flex flex-col justify-between"
     >
-      {/* Favorite button */}
+      {/* Favorite button - always visible */}
       {onToggleFavorite && (
         <button
           onClick={handleFavoriteClick}
           className={`absolute top-4 right-4 z-10 p-2 rounded-full transition-all duration-200 ${
             isFavorite
-              ? 'bg-signal-50 text-signal-600'
-              : 'bg-carbon-50 text-carbon-400 opacity-0 group-hover:opacity-100 hover:bg-signal-50 hover:text-signal-600'
+              ? 'bg-signal-100 text-signal-600 border border-signal-200'
+              : 'bg-white text-carbon-400 border border-carbon-200 hover:bg-signal-50 hover:text-signal-600 hover:border-signal-300'
           }`}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >

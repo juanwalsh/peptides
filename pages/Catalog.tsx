@@ -32,9 +32,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'name-desc', label: 'Name: Z-A' },
 ];
 
-// Highlight terms for search
-const HIGHLIGHT_TERMS = ['GHK-CU', 'TB-500', 'CJC', 'HGH'];
-
 // Helper to highlight search terms
 const highlightText = (text: string, query: string): React.ReactNode => {
   if (!query.trim()) return text;
@@ -331,7 +328,7 @@ const CatalogPage: React.FC = () => {
             </div>
          )}
 
-         {viewMode === 'sections' && !searchQuery && selectedCategory === 'All' && !showFavorites && !showRecentlyViewed ? (
+         {viewMode === 'sections' && !searchQuery && selectedCategory === 'All' && !showFavorites && !showRecentlyViewed && sortOption === 'default' ? (
             // Sections view
             <div className="space-y-16">
                {Object.entries(PRODUCT_SECTIONS).map(([sectionName, productIds]) => {
