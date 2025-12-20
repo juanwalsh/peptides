@@ -4,11 +4,28 @@ import ProductCard from '../components/ProductCard';
 import { ProductCategory } from '../types';
 import { SlidersHorizontal, Search, X } from 'lucide-react';
 
+// Product sections by use case
+const PRODUCT_SECTIONS = {
+  'Fat Burn': ['LC600', 'LC1200', '5AM', 'LC216', 'LB', 'AP5', '5AD', '10AD'],
+  'Tanning': ['MT1', 'ML10'],
+  'Growth & Recovery': ['H10', 'H15', 'CND2', 'CND5', 'CND10', 'CD2', 'CD5', 'IP5', 'IP10', 'G25', 'G210', 'G65', 'G610', 'HX5', 'SMO5', 'SMO10', 'TSM5', 'TSM10', 'IG01', 'IG1', 'FM2', 'FMP2', 'MK15', 'MK20', 'MK25'],
+  'Tissue Repair & Healing': ['KLOW', 'BBG70', 'BB10', 'BB20', 'MS10', 'MS40', '2S10', '2S50', 'CU', 'CU100', 'P41'],
+  'Metabolic & Longevity': ['NJ100', 'NJ500', 'NJ1000', 'AR50', 'GTT600', 'GTT', 'ET10', 'ET50', 'F410'],
+  'Cognitive & Neuroprotective': ['XA5', 'XA10', 'SK5', 'SK10', 'DS5', 'DS10', 'VP10'],
+  'Immune & Thymic': ['TA5', 'TA10', 'TY10', 'RA10', '375'],
+  'GLP-1 & Weight Management': ['CS10', 'MDT10', 'SUR10'],
+  'Hormonal & Reproductive': ['KS5', 'KS10', 'OT2', 'OT5', 'G75', 'ARIM100', 'ARIM200', 'ARIM300', 'ARIM500', 'ARIM1000'],
+  'Cosmetic & Anti-Aging': ['NP810', 'KP10', 'DR5'],
+  'Research Blends': ['KLOW', 'BBG70', 'BB10', 'BB20', 'CS10', 'CP10'],
+  'Solvents & Accessories': ['WA3', 'WA10']
+};
+
 const CatalogPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [minPurity, setMinPurity] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'sections' | 'grid'>('sections');
 
   const categories = ['All', ...Object.values(ProductCategory)];
 
@@ -140,17 +157,45 @@ const CatalogPage: React.FC = () => {
 
       {/* Grid */}
       <div className="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
-         {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-carbon-200 border border-carbon-200">
-               {filteredProducts.map(product => (
-                  <ProductCard key={product.id} product={product} />
-               ))}
+         {viewMode === 'sections' && !searchQuery && selectedCategory === 'All' ? (
+            // Sections view
+            <div className="space-y-16">
+               {Object.entries(PRODUCT_SECTIONS).map(([sectionName, productIds]) => {
+                  const sectionProducts = PRODUCTS.filter(p =>
+                     productIds.includes(p.id) && p.purity >= minPurity
+                  );
+
+                  if (sectionProducts.length === 0) return null;
+
+                  return (
+                     <div key={sectionName}>
+                        <div className="mb-6 pb-3 border-b border-carbon-200">
+                           <h2 className="text-2xl font-display font-medium text-carbon-900">{sectionName}</h2>
+                           <p className="text-sm text-carbon-500 mt-1 font-mono">{sectionProducts.length} PRODUCTS</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-carbon-200 border border-carbon-200">
+                           {sectionProducts.map(product => (
+                              <ProductCard key={product.id} product={product} />
+                           ))}
+                        </div>
+                     </div>
+                  );
+               })}
             </div>
          ) : (
-            <div className="py-32 text-center">
-               <p className="text-carbon-400 text-lg font-light">No records match your criteria.</p>
-               <button onClick={() => {setSelectedCategory('All'); setMinPurity(0); setSearchQuery('');}} className="mt-4 text-carbon-900 underline">Reset Search</button>
-            </div>
+            // Grid view (filtered or search mode)
+            filteredProducts.length > 0 ? (
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-carbon-200 border border-carbon-200">
+                  {filteredProducts.map(product => (
+                     <ProductCard key={product.id} product={product} />
+                  ))}
+               </div>
+            ) : (
+               <div className="py-32 text-center">
+                  <p className="text-carbon-400 text-lg font-light">No records match your criteria.</p>
+                  <button onClick={() => {setSelectedCategory('All'); setMinPurity(0); setSearchQuery('');}} className="mt-4 text-carbon-900 underline">Reset Search</button>
+               </div>
+            )
          )}
       </div>
     </div>
