@@ -92,21 +92,21 @@ const ScrollToTop = () => {
 // IMPROVED TOAST COMPONENT WITH ANIMATION STATES
 const Toast = ({ message, isExiting, onClose }: { message: string; isExiting: boolean; onClose: () => void }) => (
   <div 
-    className={`fixed top-24 right-6 z-[100] flex items-center space-x-4 bg-carbon-950 text-white px-6 py-4 rounded-sm shadow-2xl border border-carbon-800 transform transition-all duration-500 ease-in-out ${
+    className={`fixed top-20 right-4 md:top-24 md:right-6 z-[100] flex items-center space-x-3 md:space-x-4 bg-carbon-950 text-white px-4 py-3 md:px-6 md:py-4 rounded-sm shadow-2xl border border-carbon-800 transform transition-all duration-500 ease-in-out ${
       isExiting 
-        ? 'opacity-0 -translate-y-4' // Exit state
+        ? 'opacity-0 -translate-y-4' // Exit state 2
         : 'opacity-100 translate-y-0 animate-in slide-in-from-top-4 fade-in duration-300' // Enter state
     }`}
   >
-    <div className="flex items-center space-x-3">
-        <Check className="w-5 h-5 text-emerald-400" />
-        <span className="text-sm font-medium tracking-wide">{message}</span>
+    <div className="flex items-center space-x-2 md:space-x-3">
+        <Check className="w-4 h-4 md:w-5 h-5 text-emerald-400" />
+        <span className="text-xs md:text-sm font-medium tracking-wide">{message}</span>
     </div>
     
     {message.includes("Added") && (
         <Link 
             to="/cart" 
-            className="ml-6 text-[10px] font-mono uppercase tracking-widest text-carbon-300 hover:text-white border-b border-carbon-600 hover:border-white pb-0.5 transition-colors"
+            className="ml-4 md:ml-6 text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-carbon-300 hover:text-white border-b border-carbon-600 hover:border-white pb-0.5 transition-colors"
         >
             View Cart
         </Link>
@@ -921,7 +921,7 @@ export default function App() {
       <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, totalItems }}>
         <HashRouter>
           <ScrollToTop />
-          <div className="min-h-screen flex flex-col font-sans bg-white selection:bg-signal-100 selection:text-signal-900">
+          <div className="min-h-screen flex flex-col font-sans bg-white selection:bg-signal-100 selection:text-signal-900 overflow-x-hidden">
             {toastState.message && (
                 <Toast 
                     message={toastState.message} 
